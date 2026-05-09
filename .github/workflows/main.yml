@@ -1,0 +1,25 @@
+name: Daily Stock Report
+
+on:
+  schedule:
+    - cron: '0 21 * * *'  # รันตอน 05:00 น. (เช้ามืด)
+    - cron: '0 13 * * *'  # รันตอน 21:00 น. (ค่ำ)
+  workflow_dispatch:      # ช่วยให้กดรันเองเพื่อทดสอบได้
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Libraries
+        run: pip install yfinance requests pandas
+
+      - name: Execute Bot
+        run: python bot.py
