@@ -1,5 +1,26 @@
-# แก้ไขในไฟล์ .yml
+name: Daily Stock Report
+
 on:
   schedule:
-    - cron: '30 12 * * *'  # จะแจ้งเตือนตอน 20:30 น. (เวลาไต้หวัน) ก่อนตลาดเปิด
-    - cron: '30 20 * * *'  # จะแจ้งเตือนตอน 04:30 น. (เวลาไต้หวัน) หลังตลาดปิด
+    - cron: '30 12 * * *'  # 20:30 น. ไต้หวัน
+    - cron: '30 20 * * *'  # 04:30 น. ไต้หวัน
+  workflow_dispatch:
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install Libraries
+        run: |
+          pip install yfinance requests pandas
+
+      - name: Execute Bot
+        run: python bot.py
