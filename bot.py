@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 
 # เปลี่ยนเป็น Webhook URL ของคุณเอง
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/..." 
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1502609125597773874/mclvaofs8FavFZRuItcX68fYAA-65Fi9HN8wSYtCZ4Hmzqy9zGQ5t22Y4KvmMl9tzN3w" 
 
 stocks = ["JEPQ", "VOO", "SCHD", "GOOGL", "TSM"]
 
