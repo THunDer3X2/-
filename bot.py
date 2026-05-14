@@ -2,36 +2,47 @@ import yfinance as yf
 import requests
 import pandas as pd
 
-# ลิงก์ Discord ของคุณ
-URL = "https://discord.com/api/webhooks/1502609125597773874/mclvaofs8FavFZRuItcX68fYAA-65Fi9HN8wSYtCZ4Hmzqy9zGQ5t22Y4KvmMl9tzN3w"
+# เปลี่ยนเป็น Webhook URL ของคุณเอง
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/..." 
+
 stocks = ["JEPQ", "VOO", "SCHD", "GOOGL", "TSM"]
 
+def calculate_rsi(series, window=14):
+    delta = series.diff()
+    gain = (delta.where(delta > 0, 0)).fillna(0)
+    loss = (-delta.where(delta < 0, 0)).fillna(0)
+    avg_gain = gain.rolling(window=window).mean()
+    avg_loss = loss.rolling(window=window).mean()
+    rs = avg_gain / avg_loss
+    return 100 - (100 / (1 + rs))
+
 def run_bot():
-    msg = "🤖 *รายงานวิเคราะห์หุ้น (ฉบับแก้ไข)* 📈\n"
-    for t in stocks:
+    full_message = "🤖 **รายงานวิเคราะห์หุ้น (ไต้หวัน)** 🇹🇼\n"
+    
+    for ticker in stocks:
         try:
-            # ดึงข้อมูลแบบเจาะจงเพื่อลด Error
-            data = yf.Ticker(t).history(period="6mo")
-            if data.empty: continue
+            df = yf.download(ticker, period="2mo", progress=False)
+            if df.empty: continue
 
-            cur = float(data['Close'].iloc[-1])
-            low_20 = float(data['Low'].rolling(window=20).min().iloc[-1])
+            current_price = float(df['Close'].iloc[-1])
+            df['RSI'] = calculate_rsi(df['Close'])
+            rsi_now = float(df['RSI'].iloc[-1])
+
+            full_message += f"\n🔍 **{ticker}** | `${current_price:.2f}`\n"
             
-            # คำนวณ RSI แบบง่าย
-            delta = data['Close'].diff()
-            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-            rsi = 100 - (100 / (1 + (gain / loss))).iloc[-1]
-
-            msg += f"\n🔍 *{t}*: ${cur:.2f} (RSI: {rsi:.1f})"
-            if rsi < 35: msg += " 🔥 *จุดซื้อ!*"
-            elif rsi > 70: msg += " ⚠️ *ระวัง!*"
-            msg += f"\n🎯 เป้าซื้อ: `${low_20 * 1.01:.2f}`\n"
-
-        except:
-            msg += f"\n❌ {t}: Error"
+            if rsi_now < 35:
+                status = "🔥 **จุดซื้อที่ดี!** (Oversold)"
+            elif rsi_now < 45:
+                status = "✅ **น่าสะสม**"
+            else:
+                status = "⏳ **ถือรอ**"
             
-    requests.post(URL, json={"content": msg})
+            full_message += f"   • สถานะ: {status} (RSI: `{rsi_now:.1f}`)\n"
 
-if _name_ == "_main_":
+        except Exception as e:
+            print(f"Error {ticker}: {e}")
+
+    requests.post(DISCORD_WEBHOOK_URL, json={"content": full_message})
+
+if __name__ == "__main__":
     run_bot()
